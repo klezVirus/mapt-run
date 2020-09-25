@@ -102,14 +102,13 @@ bind-interfaces
 # Choose interface for binding
 interface=$wlan
 # Specify range of IP addresses for DHCP leasses
-# dhcp-range=172.0.0.10,172.0.0.250,8h
+dhcp-range=172.0.0.10,172.0.0.250,8h
 # Router
 # dhcp-option=3,172.0.0.1
-# DNS local
-dhcp-option=6,172.0.0.1
 # Specify global DNS server
-server=8.8.8.8
-server=8.8.4.4" > "$conf"
+dhcp-option=6,8.8.8.8
+#server=8.8.8.8
+#server=8.8.4.4" > "$conf"
 
 }
 
@@ -336,6 +335,8 @@ proxy_port=8080
 if [ $(id -u) -gt 0 ]; then
     echo "[-] Must run as root or sudo"
     exit 1
+else
+	rfkill unblock all
 fi
 
 if [ $# -lt 1 ]; then
@@ -424,10 +425,12 @@ eval set -- "$PARAMS"
 
 if [ $flush_iptables -gt 0 ]; then
     printf "[+] Flushing IPTABLES... "
-    iptables -t nat -X 2>/dev/null
+    iptables -t nat -F REDSOCKS 2>/dev/null
+    iptables -t nat -X REDSOCKS 2>/dev/null
     iptables -t nat -F 2>/dev/null
-    iptables -X 2>/dev/null
+    iptables -t nat -X 2>/dev/null
     iptables -F 2>/dev/null
+    iptables -X 2>/dev/null
     echo "Done"
 fi
 
