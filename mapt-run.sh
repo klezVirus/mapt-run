@@ -135,7 +135,9 @@ network={
 run_redsocks(){
     # redsocks.conf
     conf="$1"
-        
+    mkdir -p "/var/log/redsocks"
+    touch "/var/log/redsocks/redsocks.log"
+	
     redsocks -c "$conf" 
 }
 
@@ -257,7 +259,7 @@ runall(){
     ssid="$3"
     pass="$4"
         
-    run_redsocks "RSconf" 
+    run_redsocks "$RSconf" 
     run_dnsmasq  "$DNSmasqconf" 
     run_hostapd "$HostaPDconf" "$wlan" "$wired" 
     run_hotspot "$HSconf" "$wlan" "$passphrase" 
