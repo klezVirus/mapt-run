@@ -307,7 +307,7 @@ execute=0
 suppress_errors="2>&1 2>/dev/null"
 
 
-if [ $(id -u) -lt 0 ]; then
+if [ $(id -u) -gt 0 ]; then
     echo "[-] Must run as root or sudo"
     exit 1
 fi
