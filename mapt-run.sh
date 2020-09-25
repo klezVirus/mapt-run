@@ -42,7 +42,7 @@ generateall(){
     burpIP="$4"
     burp_port="$5"
 
-	
+    
     write_redsocks "$RSconf" "$burpIP" "$burp_port"
     write_hostapd "$HostaPDconf" "$wlan" "$ssid" "$pass"
     write_dnsmasq "$DNSmasqconf" "$wlan"
@@ -135,7 +135,7 @@ run_redsocks(){
     conf="$1"
     mkdir -p "/var/log/redsocks"
     touch "/var/log/redsocks/redsocks.log"
-	
+    
     redsocks -c "$conf" 
 }
 
@@ -160,7 +160,7 @@ run_hostapd(){
     conf="$1"
     wlan="$2"
     wired="$3"
-	
+    
     # Configure IP address for WLAN
     ifconfig $wlan 172.0.0.1 
     # Start DHCP/DNS server (Not needed as we are using dnsmasq)
@@ -247,20 +247,20 @@ init_selective_redirect(){
 }
 
 validate_ip(){
-	ip="$1"
+    ip="$1"
     if [[ "$(echo $ip | grep -oP '^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$')" == "" ]]; then
         echo "0"
-	else
-		echo "1"
+    else
+        echo "1"
     fi
 }
 
 validate_port(){
-	port="$1"
+    port="$1"
     if [[ "$(echo $port | grep -oP '^\d{2,5}$')" == "" ]]; then
         echo "0"
-	else
-		echo "1"
+    else
+        echo "1"
     fi
 }
 
@@ -336,81 +336,80 @@ if [ $# -lt 1 ]; then
 fi
 
 while (( "$#" )); do
-#while true; do
-  case "$1" in
-    -h|--help)
-      usage
-      break
-      ;;
-    -s|--ssid)
-      ssid="$2"
-      shift 2
-      ;;
-    -w|--wlan)
-      wlan_iface="$2"
-      shift 2
-      ;;
-    -l|--wired)
-      wired_iface="$2"
-      shift 2
-      ;;
-    -i|--install)
-      install
-      exit 0
-      ;;
-    -p|--passphrase)
-      passphrase="$2"
-      shift 2
-      ;;
-    -g|--generate)
-      generate=1
-      shift 1
-      ;;
-    -e|--execute)
-      execute=1
-      shift 1
-      ;;
-    -F|--flush)
-      flush_iptables=1
-      shift 1
-      ;;
-    -k|--killall)
-      kill_processes=1
-      shift 1
-      ;;
-    -r|--redirect)
-      redirect="$2"
-      shift 2
-      ;;
-    -X|--proxy)
-      proxy_ip=$(echo "$2" | awk -F":" '{print $1}')
-	  if [ "$(validate_ip $proxy_ip)" -eq 0 ]; then
-		echo "[-] Invalid proxy address: $proxy_ip"
-		exit 1
-	  fi
-      proxy_port=$(echo "$2" | awk -F":" '{print $2}')
-	  if [ "$(validate_port $proxy_port)" -eq 0 ]; then
-		echo "[-] Invalid proxy port: $proxy_port"
-		exit 1
-	  fi
-      shift 2
-      ;;
-    --) # end argument parsing
-      shift
-      break
-      ;;
-    -*|--*) # unsupported flags
-      echo  "Error: Unsupported flag $1" >&2
-      exit 1
-      ;;
-    *) # preserve positional arguments
-      if [ -n "$PARAMS" ]
-        then
-            PARAMS="$1"
-        fi
-      shift
-      ;;
-  esac
+    case "$1" in
+        -h|--help)
+            usage
+            break
+            ;;
+        -s|--ssid)
+            ssid="$2"
+            shift 2
+            ;;
+        -w|--wlan)
+            wlan_iface="$2"
+            shift 2
+            ;;
+        -l|--wired)
+            wired_iface="$2"
+            shift 2
+            ;;
+        -i|--install)
+            install
+            exit 0
+            ;;
+        -p|--passphrase)
+            passphrase="$2"
+            shift 2
+            ;;
+        -g|--generate)
+            generate=1
+            shift 1
+            ;;
+        -e|--execute)
+            execute=1
+            shift 1
+            ;;
+        -F|--flush)
+            flush_iptables=1
+            shift 1
+            ;;
+        -k|--killall)
+            kill_processes=1
+            shift 1
+            ;;
+        -r|--redirect)
+            redirect="$2"
+            shift 2
+            ;;
+        -X|--proxy)
+            proxy_ip=$(echo "$2" | awk -F":" '{print $1}')
+            if [ "$(validate_ip $proxy_ip)" -eq 0 ]; then
+                echo "[-] Invalid proxy address: $proxy_ip"
+                exit 1
+            fi
+            proxy_port=$(echo "$2" | awk -F":" '{print $2}')
+            if [ "$(validate_port $proxy_port)" -eq 0 ]; then
+                echo "[-] Invalid proxy port: $proxy_port"
+                exit 1
+            fi
+            shift 2
+            ;;
+        --) # end argument parsing
+            shift
+            break
+            ;;
+        -*|--*) # unsupported flags
+            echo  "Error: Unsupported flag $1" >&2
+            exit 1
+            ;;
+        *) # preserve positional arguments
+            if [ -n "$PARAMS" ]
+                then
+                PARAMS="$1"
+            fi
+            shift
+            ;;
+    esac
 done
 
 # set positional arguments in their proper place (Not used)
@@ -427,11 +426,11 @@ fi
 
 if [ $kill_processes -gt 0 ]; then
     for p in hostapd dnsmasq redsocks
-	do
-		printf "[+] Killing $p... "
-		killall $p 2>/dev/null
-		echo "Done"
-	done
+    do
+        printf "[+] Killing $p... "
+        killall $p 2>/dev/null
+        echo "Done"
+    done
 fi
 
 if [ -z $ssid ] || [ -z $wlan_iface ] || [ -z $wired_iface ]; then
