@@ -106,8 +106,10 @@ dhcp-range=172.0.0.10,172.0.0.250,8h
 # Router
 # dhcp-option=3,172.0.0.1
 # Specify global DNS server
-dhcp-option=6,8.8.8.8
-#server=8.8.8.8
+dhcp-option=option:dns-server,8.8.8.8
+server=8.8.8.8
+log-queries
+log-dhcp
 #server=8.8.4.4" > "$conf"
 
 }
