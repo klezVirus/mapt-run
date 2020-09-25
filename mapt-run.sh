@@ -135,24 +135,24 @@ network={
 run_redsocks(){
     # redsocks.conf
     conf="$1"
-    silence_errors="$2"
-    redsocks -c "$conf" "$silence_errors"
+        
+    redsocks -c "$conf" 
 }
 
 run_hotspot(){
     # hotspot.conf
     conf="$1"
     wlan="$2"
-    silence_errors="$3"
+        
     
-    wpa_supplicant -B -i "$wlan" -c "$conf" -D nl80211,wext "$silence_errors"
+    wpa_supplicant -B -i "$wlan" -c "$conf" -D nl80211,wext 
 }
 
 run_dnsmasq(){
     # dnsmasq.conf
     conf="$1"
-    silence_errors="$2"
-    dnsmasq -C "$conf" "$silence_errors"
+        
+    dnsmasq -C "$conf" 
 }
 
 
@@ -161,27 +161,27 @@ run_hostapd(){
     conf="$1"
     wlan="$2"
     wired="$3"
-    silence_errors="$4"
+        
 
     # Configure IP address for WLAN
-    ifconfig $wlan 172.0.0.1 "$silence_errors"
+    ifconfig $wlan 172.0.0.1 
     # Start DHCP/DNS server
-    kill -9 `cat /var/run/dhcpd.pid` "$silence_errors"
-    dhcpd "$silence_errors"
+    kill -9 `cat /var/run/dhcpd.pid` 
+    dhcpd 
     # systemctl restart dnsmasq
     # Enable routing
-    sysctl net.ipv4.ip_forward=1 "$silence_errors"
+    sysctl net.ipv4.ip_forward=1 
     # Enable NAT
-    iptables -t nat -A POSTROUTING -o $wired -j MASQUERADE "$silence_errors"
+    iptables -t nat -A POSTROUTING -o $wired -j MASQUERADE 
     # Run access point daemon
-    hostapd hostapd.conf "$silence_errors"
+    hostapd hostapd.conf 
 
 }
 
 init_iptables_redsocks(){
     
     wlan="$1"
-    silence_errors="$2"
+        
     
     #### Packet marking for redirection
     #
@@ -197,20 +197,20 @@ init_iptables_redsocks(){
     #### Enable tun1 to receive marked packtes
     #sysctl -w net.ipv4.conf.tun1.rp_filter=2
 
-    iptables -t nat -N REDSOCKS "$silence_errors"
+    iptables -t nat -N REDSOCKS 
     
     # Create chain for VPN, if needed
     #iptables -t nat -N VPN
 
     #### Ignore LANs and reserved ranges
-    iptables -t nat -A REDSOCKS -d 0.0.0.0/8 -j RETURN "$silence_errors"
-    iptables -t nat -A REDSOCKS -d 10.0.0.0/8 -j RETURN "$silence_errors"
-    iptables -t nat -A REDSOCKS -d 127.0.0.0/8 -j RETURN "$silence_errors"
-    iptables -t nat -A REDSOCKS -d 169.254.0.0/16 -j RETURN "$silence_errors"
-    iptables -t nat -A REDSOCKS -d 172.16.0.0/12 -j RETURN "$silence_errors"
-    iptables -t nat -A REDSOCKS -d 192.168.0.0/16 -j RETURN "$silence_errors"
-    iptables -t nat -A REDSOCKS -d 224.0.0.0/4 -j RETURN "$silence_errors"
-    iptables -t nat -A REDSOCKS -d 240.0.0.0/4 -j RETURN "$silence_errors"
+    iptables -t nat -A REDSOCKS -d 0.0.0.0/8 -j RETURN 
+    iptables -t nat -A REDSOCKS -d 10.0.0.0/8 -j RETURN 
+    iptables -t nat -A REDSOCKS -d 127.0.0.0/8 -j RETURN 
+    iptables -t nat -A REDSOCKS -d 169.254.0.0/16 -j RETURN 
+    iptables -t nat -A REDSOCKS -d 172.16.0.0/12 -j RETURN 
+    iptables -t nat -A REDSOCKS -d 192.168.0.0/16 -j RETURN 
+    iptables -t nat -A REDSOCKS -d 224.0.0.0/4 -j RETURN 
+    iptables -t nat -A REDSOCKS -d 240.0.0.0/4 -j RETURN 
 
     #### VPN dedicated Chain, enable if needed
     # iptables -t nat -A PREROUTING -d 149.154.0.0/16 -j VPN
@@ -219,10 +219,10 @@ init_iptables_redsocks(){
     # iptables -t nat -A VPN -p tcp -j REDIRECT --to-ports 9999
      
     #### Redirect everything else to 12345
-    iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports 12345 "$silence_errors"
-    iptables -t nat -A REDSOCKS -p udp -j REDIRECT --to-ports 12345 "$silence_errors"
-    iptables -t nat -A REDSOCKS -p sctp -j REDIRECT --to-ports 12345 "$silence_errors"
-    iptables -t nat -A REDSOCKS -p dccp -j REDIRECT --to-ports 12345 "$silence_errors"
+    iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports 12345 
+    iptables -t nat -A REDSOCKS -p udp -j REDIRECT --to-ports 12345 
+    iptables -t nat -A REDSOCKS -p sctp -j REDIRECT --to-ports 12345 
+    iptables -t nat -A REDSOCKS -p dccp -j REDIRECT --to-ports 12345 
 
 }
 
@@ -233,7 +233,7 @@ init_selective_redirect(){
     # redsocks.conf
     wlan="$1"
     toRedirect=($(echo "$2" | awk -F"," '{for(i=1;i<=NF;i++){printf $i" " }}'))
-    silence_errors="$3"
+        
     for ip in "${toRedirect[@]}"
     do
     if [[ "$(echo $ip | grep -oP '^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$')" == "" ]]; then
@@ -241,10 +241,10 @@ init_selective_redirect(){
         continue
     fi
     printf "[*] Redirecting $ip to redsocks... "
-    iptables -t nat -A REDSOCKS -p tcp -d "$ip" -j REDIRECT --to-ports 12345 "$silence_errors"
+    iptables -t nat -A REDSOCKS -p tcp -d "$ip" -j REDIRECT --to-ports 12345 
     echo "Done"
     done
-    iptables -t nat -A PREROUTING --in-interface "$wlan" -j REDSOCKS "$silence_errors"
+    iptables -t nat -A PREROUTING --in-interface "$wlan" -j REDSOCKS 
 
 }
 
@@ -258,12 +258,12 @@ runall(){
     wired="$2"
     ssid="$3"
     pass="$4"
-    silence_errors="$5"
+        
     
-    run_redsocks "RSconf" "$silence_errors"
-    run_dnsmasq  "$DNSmasqconf" "$silence_errors"
-    run_hostapd "$HostaPDconf" "$wlan" "$wired" "$silence_errors"
-    run_hotspot "$HSconf" "$wlan" "$passphrase" "$silence_errors"
+    run_redsocks "RSconf" 
+    run_dnsmasq  "$DNSmasqconf" 
+    run_hostapd "$HostaPDconf" "$wlan" "$wired" 
+    run_hotspot "$HSconf" "$wlan" "$passphrase" 
     
 
 }
@@ -288,7 +288,6 @@ usage(){
     echo "#     -r: redirect given IP addresses (comma divided) to redsocks                            #"
     echo "#     -i: install dependencies                                                               #"
     echo "#     -F: flush iptables chains                                                              #"
-    echo "#     -D: enable debug output                                                                #"
     echo "#     -h: show this help                                                                     #"
     echo "#                                                                                            #"
     echo "# ========================================================================================== #"
@@ -297,7 +296,7 @@ usage(){
 
 install(){
     apt-get update
-    apt-get install -y hostapd redsocks dnsmasq
+    apt-get install -y hostapd redsocks dnsmasq dhcpcd
 }
 
 
@@ -305,8 +304,7 @@ default_passphrase="Passw0rd!"
 init_redirection=0
 generate=0
 execute=0
-suppress_errors="2>&1 2>/dev/null"
-
+flush_iptables=0
 
 if [ $(id -u) -gt 0 ]; then
     echo "[-] Must run as root or sudo"
@@ -356,10 +354,6 @@ while (( "$#" )); do
       flush_iptables=1
       shift 1
       ;;
-    -D|--debug)
-      suppress_errors=""
-      shift 1
-      ;;
     -r|--redirect)
       redirect="$2"
       shift 2
@@ -387,10 +381,10 @@ eval set -- "$PARAMS"
 
 if [ $flush_iptables -gt 0 ]; then
     printf "[+] Flushing IPTABLES... "
-    iptables -t nat -X $suppress_errors
-    iptables -t nat -F $suppress_errors
-    iptables -X $suppress_errors
-    iptables -F $suppress_errors
+    iptables -t nat -X     
+    iptables -t nat -F     
+    iptables -X     
+    iptables -F     
     echo "Done"
 fi
 
@@ -425,19 +419,19 @@ fi
 
 if [ $generate -gt 0 ] || [ $execute -gt 0 ]; then
     echo "[*] Generating configuration files"
-    generateall "$wlan_iface" "$ssid" "$passphrase" "$suppress_errors"
+    generateall "$wlan_iface" "$ssid" "$passphrase"     
 fi
 
 if [ $execute -gt 0 ]; then
     
     if [ $init_redirection -gt 0 ]; then
         printf "[*] Setting up iptables for redsocks... "
-        init_iptables_redsocks "$wlan_iface" "$suppress_errors"
-        init_selective_redirect "$wlan_iface" "$redirect" "$suppress_errors"
+        init_iptables_redsocks "$wlan_iface"     
+        init_selective_redirect "$wlan_iface" "$redirect"     
         echo "Done"
     fi    
     printf "[*] Spinning up redsocks, dnsmasq and hostapd... "
-    runall "$wlan_iface" "$wired_iface" "$ssid" "$passphrase" "$suppress_errors"
+    runall "$wlan_iface" "$wired_iface" "$ssid" "$passphrase"     
     echo "Done"
 else
     echo "[+] Done"
