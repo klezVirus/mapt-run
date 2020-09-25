@@ -143,7 +143,6 @@ run_hotspot(){
     # hotspot.conf
     conf="$1"
     wlan="$2"
-        
     
     wpa_supplicant -B -i "$wlan" -c "$conf" -D nl80211,wext 
 }
@@ -161,13 +160,12 @@ run_hostapd(){
     conf="$1"
     wlan="$2"
     wired="$3"
-        
-
+	
     # Configure IP address for WLAN
     ifconfig $wlan 172.0.0.1 
-    # Start DHCP/DNS server
-    kill -9 `cat /var/run/dhcpd.pid` 
-    dhcpd 
+    # Start DHCP/DNS server (Not needed as we are using dnsmasq)
+    # kill -9 `cat /var/run/dhcpd.pid` 2>/dev/null
+    # dhcpd 
     # systemctl restart dnsmasq
     # Enable routing
     sysctl net.ipv4.ip_forward=1 
@@ -182,7 +180,6 @@ init_iptables_redsocks(){
     
     wlan="$1"
         
-    
     #### Packet marking for redirection
     #
     # ip rule add fwmark 2 table 3
@@ -224,6 +221,8 @@ init_iptables_redsocks(){
     iptables -t nat -A REDSOCKS -p sctp -j REDIRECT --to-ports 12345 
     iptables -t nat -A REDSOCKS -p dccp -j REDIRECT --to-ports 12345 
 
+    iptables -t nat -A PREROUTING --in-interface "$wlan" -j REDSOCKS 
+
 }
 
 init_selective_redirect(){
@@ -244,7 +243,6 @@ init_selective_redirect(){
     iptables -t nat -A REDSOCKS -p tcp -d "$ip" -j REDIRECT --to-ports 12345 
     echo "Done"
     done
-    iptables -t nat -A PREROUTING --in-interface "$wlan" -j REDSOCKS 
 
 }
 
@@ -259,7 +257,6 @@ runall(){
     ssid="$3"
     pass="$4"
         
-    
     run_redsocks "RSconf" 
     run_dnsmasq  "$DNSmasqconf" 
     run_hostapd "$HostaPDconf" "$wlan" "$wired" 
@@ -288,6 +285,7 @@ usage(){
     echo "#     -r: redirect given IP addresses (comma divided) to redsocks                            #"
     echo "#     -i: install dependencies                                                               #"
     echo "#     -F: flush iptables chains                                                              #"
+    echo "#     -K: kill all processes involved                                                        #"
     echo "#     -h: show this help                                                                     #"
     echo "#                                                                                            #"
     echo "# ========================================================================================== #"
@@ -296,7 +294,7 @@ usage(){
 
 install(){
     apt-get update
-    apt-get install -y hostapd redsocks dnsmasq dhcpcd
+    apt-get install -y hostapd redsocks dnsmasq dhcpd
 }
 
 
@@ -381,11 +379,20 @@ eval set -- "$PARAMS"
 
 if [ $flush_iptables -gt 0 ]; then
     printf "[+] Flushing IPTABLES... "
-    iptables -t nat -X     
-    iptables -t nat -F     
-    iptables -X     
-    iptables -F     
+    iptables -t nat -X 2>/dev/null
+    iptables -t nat -F 2>/dev/null
+    iptables -X 2>/dev/null
+    iptables -F 2>/dev/null
     echo "Done"
+fi
+
+if [ $flush_iptables -gt 0 ]; then
+    for p in hostapd dnsmasq redsocks
+	do
+		printf "[+] Killing $p... "
+		killall $p 2>/dev/null
+		echo "Done"
+	done
 fi
 
 if [ -z $ssid ] || [ -z $wlan_iface ] || [ -z $wired_iface ]; then
