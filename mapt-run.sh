@@ -102,7 +102,14 @@ bind-interfaces
 # Choose interface for binding
 interface=$wlan
 # Specify range of IP addresses for DHCP leasses
-dhcp-range=172.0.0.10,172.0.0.250" > "$conf"
+dhcp-range=172.0.0.10,172.0.0.250,8h
+# Router
+dhcp-option=3,172.0.0.1
+# DNS local
+dhcp-option=6,172.0.0.1
+# Specify global DNS server
+server=8.8.8.8
+server=8.8.4.4" > "$conf"
 
 }
 
