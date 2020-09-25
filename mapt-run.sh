@@ -30,12 +30,7 @@
 # ############################################################################## #
 
 generateall(){
-    
-    #### TO CHANGE BURP IP PORT, MODIFY THIS HERE
-    burpIP="127.0.0.1"
-    burp_port="8080"
-    ####
-    
+        
     HSconf="./hotspot.conf"
     HostaPDconf="./hostapd.conf"
     DNSmasqconf="./dnsmasq.conf"
@@ -44,7 +39,10 @@ generateall(){
     wlan="$1"
     ssid="$2"
     pass="$3"
-    
+    burpIP="$4"
+    burp_port="$5"
+
+	
     write_redsocks "$RSconf" "$burpIP" "$burp_port"
     write_hostapd "$HostaPDconf" "$wlan" "$ssid" "$pass"
     write_dnsmasq "$DNSmasqconf" "$wlan"
@@ -248,6 +246,24 @@ init_selective_redirect(){
 
 }
 
+validate_ip(){
+	ip="$1"
+    if [[ "$(echo $ip | grep -oP '^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$')" == "" ]]; then
+        echo "0"
+	else
+		echo "1"
+    fi
+}
+
+validate_port(){
+	port="$1"
+    if [[ "$(echo $port | grep -oP '^\d{2,5}$')" == "" ]]; then
+        echo "0"
+	else
+		echo "1"
+    fi
+}
+
 runall(){
     HSconf="./hotspot.conf"
     HostaPDconf="./hostapd.conf"
@@ -288,6 +304,7 @@ usage(){
     echo "#     -i: install dependencies                                                               #"
     echo "#     -F: flush iptables chains                                                              #"
     echo "#     -K: kill all processes involved                                                        #"
+    echo "#     -X: custom proxy (IP:PORT) (default: 127.0.0.1:8080)                                   #"
     echo "#     -h: show this help                                                                     #"
     echo "#                                                                                            #"
     echo "# ========================================================================================== #"
@@ -305,6 +322,9 @@ init_redirection=0
 generate=0
 execute=0
 flush_iptables=0
+kill_processes=0
+proxy_ip="127.0.0.1"
+proxy_port=8080
 
 if [ $(id -u) -gt 0 ]; then
     echo "[-] Must run as root or sudo"
@@ -354,8 +374,25 @@ while (( "$#" )); do
       flush_iptables=1
       shift 1
       ;;
+    -k|--killall)
+      kill_processes=1
+      shift 1
+      ;;
     -r|--redirect)
       redirect="$2"
+      shift 2
+      ;;
+    -X|--proxy)
+      proxy_ip=$(echo "$2" | awk -F":" '{print $1}')
+	  if [ "$(validate_ip $proxy_ip)" -eq 0 ]; then
+		echo "[-] Invalid proxy address: $proxy_ip"
+		exit 1
+	  fi
+      proxy_port=$(echo "$2" | awk -F":" '{print $2}')
+	  if [ "$(validate_port $proxy_port)" -eq 0 ]; then
+		echo "[-] Invalid proxy port: $proxy_port"
+		exit 1
+	  fi
       shift 2
       ;;
     --) # end argument parsing
@@ -388,7 +425,7 @@ if [ $flush_iptables -gt 0 ]; then
     echo "Done"
 fi
 
-if [ $flush_iptables -gt 0 ]; then
+if [ $kill_processes -gt 0 ]; then
     for p in hostapd dnsmasq redsocks
 	do
 		printf "[+] Killing $p... "
@@ -428,7 +465,7 @@ fi
 
 if [ $generate -gt 0 ] || [ $execute -gt 0 ]; then
     echo "[*] Generating configuration files"
-    generateall "$wlan_iface" "$ssid" "$passphrase"     
+    generateall "$wlan_iface" "$ssid" "$passphrase" "$proxy_ip" "$proxy_port"
 fi
 
 if [ $execute -gt 0 ]; then
