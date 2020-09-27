@@ -24,25 +24,27 @@ Using the script is simple, as observable by the help:
 
 ```
 # #################                  MAPT Easy-Setup Script                ################# #
-# This script has been made to easily generate and setup the environment for a Mobile PT     #
+#                                                                                            #
+#   This script has been made to easily generate and setup the environment for a Mobile PT   #
 #                                                                                            #
 # ========================================================================================== #
 #                                                                                            #
-# Usage:                                                                                     #
-#   ./mapt-run -s <SSID> -p <PWD> -l <LAN> -w <WLAN> [Optional args]                         #
-# Required arguments:                                                                        #
-#   -s: SSID for the hosted network                                                          #
-#   -w: WLAN interface                                                                       #
-#   -l: LAN interface (internet access)                                                      #
-# Optional arguments:                                                                        #
-#   -p: Passphrase for the hosted network (default: Passw0rd!)                               #
-#   -g: generate configuration files for hostapd, dnsmasq and redsocks                       #
-#   -e: run hostapd, dnsmasq and redsocks (implies -g)                                       #
-#   -r: redirect given IP addresses (comma divided) to redsocks                              #
-#   -i: install dependencies                                                                 #
-#   -F: flush iptables chains                                                                #
-#   -D: enable debug output                                                                  #
-#   -h: show this help                                                                       #
+#   Usage:                                                                                   #
+#     ./mapt-run -s <SSID> -p <PWD> -l <LAN> -w <WLAN> [Optional args]                       #
+#   Required arguments:                                                                      #
+#     -s: SSID for the hosted network                                                        #
+#     -w: WLAN interface                                                                     #
+#     -l: LAN interface (internet access)                                                    #
+#   Optional arguments:                                                                      #
+#     -p: Passphrase for the hosted network (default: Passw0rd!)                             #
+#     -g: generate configuration files for hostapd, dnsmasq and redsocks                     #
+#     -e: run hostapd, dnsmasq and redsocks (implies -g)                                     #
+#     -r: redirect given IP addresses (comma divided) to redsocks                            #
+#     -i: install dependencies                                                               #
+#     -F: flush iptables chains                                                              #
+#     -K: kill all processes involved                                                        #
+#     -X: custom proxy (IP:PORT) (default: 127.0.0.1:8080)                                   #
+#     -h: show this help                                                                     #
 #                                                                                            #
 # ========================================================================================== #
 ```

@@ -110,7 +110,8 @@ dhcp-option=option:dns-server,8.8.8.8
 server=8.8.8.8
 log-queries
 log-dhcp
-#server=8.8.4.4" > "$conf"
+log-facility=/var/log/dnsmasq.log
+# server=8.8.4.4" > "$conf"
 
 }
 
