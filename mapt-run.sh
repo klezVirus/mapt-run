@@ -49,6 +49,31 @@ generateall(){
     write_hotspotconf "$HSconf" "$ssid" "$pass"
 }
 
+killall_processes(){
+	for p in hostapd dnsmasq redsocks
+    do
+        printf "[+] Killing $p... "
+        killall $p 2>/dev/null
+        echo "Done"
+    done
+}
+
+flushall_iptables(){
+	printf "[+] Flushing IPTABLES... "
+    iptables -t nat -F REDSOCKS 2>/dev/null
+    iptables -t nat -X REDSOCKS 2>/dev/null
+    iptables -t nat -F 2>/dev/null
+    iptables -t nat -X 2>/dev/null
+    iptables -F 2>/dev/null
+    iptables -X 2>/dev/null
+    echo "Done"
+}
+
+ctrl_c(){
+    killall_processes
+	flushall_iptables
+}
+
 write_redsocks(){
 
     conf="$1"
@@ -102,11 +127,11 @@ bind-interfaces
 # Choose interface for binding
 interface=$wlan
 # Specify range of IP addresses for DHCP leasses
-dhcp-range=172.0.0.10,172.0.0.250,8h
+dhcp-range=172.16.0.10,172.16.0.250,8h
 # Router
-# dhcp-option=3,172.0.0.1
+dhcp-option=3,172.16.0.1
 # Specify global DNS server
-dhcp-option=option:dns-server,8.8.8.8
+dhcp-option=option:dns-server,172.16.0.1
 server=8.8.8.8
 log-queries
 log-dhcp
@@ -171,7 +196,7 @@ run_hostapd(){
     wired="$3"
     
     # Configure IP address for WLAN
-    ifconfig $wlan 172.0.0.1 
+    ifconfig $wlan 172.16.0.1 
     # Start DHCP/DNS server (Not needed as we are using dnsmasq)
     # kill -9 `cat /var/run/dhcpd.pid` 2>/dev/null
     # dhcpd 
@@ -179,6 +204,7 @@ run_hostapd(){
     # Enable routing
     sysctl net.ipv4.ip_forward=1 
     # Enable NAT
+	iptables -P FORWARD ACCEPT
     iptables -t nat -A POSTROUTING -o $wired -j MASQUERADE 
     # Run access point daemon
     hostapd hostapd.conf 
@@ -213,7 +239,7 @@ init_iptables_redsocks(){
     iptables -t nat -A REDSOCKS -d 10.0.0.0/8 -j RETURN 
     iptables -t nat -A REDSOCKS -d 127.0.0.0/8 -j RETURN 
     iptables -t nat -A REDSOCKS -d 169.254.0.0/16 -j RETURN 
-    iptables -t nat -A REDSOCKS -d 172.16.0.0/12 -j RETURN 
+    iptables -t nat -A REDSOCKS -d 172.16.1.0/12 -j RETURN 
     iptables -t nat -A REDSOCKS -d 192.168.0.0/16 -j RETURN 
     iptables -t nat -A REDSOCKS -d 224.0.0.0/4 -j RETURN 
     iptables -t nat -A REDSOCKS -d 240.0.0.0/4 -j RETURN 
@@ -339,7 +365,8 @@ if [ $(id -u) -gt 0 ]; then
     echo "[-] Must run as root or sudo"
     exit 1
 else
-	rfkill unblock all
+	nmcli radio wifi off 2>/dev/null
+ 	rfkill unblock all
 fi
 
 if [ $# -lt 1 ]; then
@@ -426,24 +453,14 @@ done
 # set positional arguments in their proper place (Not used)
 eval set -- "$PARAMS"
 
+trap ctrl_c INT
+
 if [ $flush_iptables -gt 0 ]; then
-    printf "[+] Flushing IPTABLES... "
-    iptables -t nat -F REDSOCKS 2>/dev/null
-    iptables -t nat -X REDSOCKS 2>/dev/null
-    iptables -t nat -F 2>/dev/null
-    iptables -t nat -X 2>/dev/null
-    iptables -F 2>/dev/null
-    iptables -X 2>/dev/null
-    echo "Done"
+    flushall_iptables
 fi
 
 if [ $kill_processes -gt 0 ]; then
-    for p in hostapd dnsmasq redsocks
-    do
-        printf "[+] Killing $p... "
-        killall $p 2>/dev/null
-        echo "Done"
-    done
+    killall_processes
 fi
 
 if [ -z $ssid ] || [ -z $wlan_iface ] || [ -z $wired_iface ]; then
